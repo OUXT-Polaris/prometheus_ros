@@ -1,0 +1,6 @@
+topic_monitor_node:
+  topics:
+    type: string_array
+    default_value: []
+    description: "Name of the topics you want to monitor."
+    read_only: true
