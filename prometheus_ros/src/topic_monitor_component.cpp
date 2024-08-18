@@ -42,7 +42,15 @@ void TopicMonitorComponent::updateSubscription()
       continue;
     }
     if (topic_name_and_types_.find(topic) == topic_name_and_types_.end()) {
-      auto callback = [&](const auto &) {};
+      auto callback = [&](const auto & message_info) {
+        const rclcpp::Time now = get_clock()->now();
+        period_collector_.OnMessageReceived(
+          rclcpp::Time(message_info.get_rmw_message_info().source_timestamp),
+          message_info.get_rmw_message_info().received_timestamp);
+        age_collector_.OnMessageReceived(
+          rclcpp::Time(message_info.get_rmw_message_info().source_timestamp),
+          message_info.get_rmw_message_info().received_timestamp);
+      };
 
       topic_name_and_types_.emplace(topic, name_and_types.at(topic)[0]);
       message_info_subscriptions_.emplace_back(rclcpp::create_message_info_subscription(
