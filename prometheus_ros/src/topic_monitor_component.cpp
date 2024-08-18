@@ -22,7 +22,23 @@ TopicMonitorComponent::TopicMonitorComponent(const rclcpp::NodeOptions & options
   parameters_(topic_monitor_node::ParamListener(get_node_parameters_interface()).get_params())
 {
   using namespace std::chrono_literals;
-  timer_ = this->create_wall_timer(10s, [this]() { updateSubscription(); });
+  timer_ = this->create_wall_timer(10s, [this]() {
+    updateSubscription();
+    updateMetric();
+  });
+}
+
+void TopicMonitorComponent::updateMetric()
+{
+  using namespace std::chrono_literals;
+  const rclcpp::Time now = get_clock()->now();
+  const auto period_statistic_message =
+    libstatistics_collector::collector::GenerateStatisticMessage(
+      get_name(), period_collector_.GetMetricName(), period_collector_.GetMetricUnit(),
+      now - rclcpp::Duration(10s), now, period_collector_.GetStatisticsResults());
+  const auto age_statistic_message = libstatistics_collector::collector::GenerateStatisticMessage(
+    get_name(), age_collector_.GetMetricName(), age_collector_.GetMetricUnit(),
+    now - rclcpp::Duration(10s), now, age_collector_.GetStatisticsResults());
 }
 
 void TopicMonitorComponent::updateSubscription()

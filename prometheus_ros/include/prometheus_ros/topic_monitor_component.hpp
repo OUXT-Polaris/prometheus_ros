@@ -42,6 +42,7 @@ private:
   std::vector<std::shared_ptr<rclcpp::MessageInfoSubscription>> message_info_subscriptions_;
   std::unordered_map<std::string, std::string> topic_name_and_types_;
   void updateSubscription();
+  void updateMetric();
   rclcpp::TimerBase::SharedPtr timer_;
 };
 
