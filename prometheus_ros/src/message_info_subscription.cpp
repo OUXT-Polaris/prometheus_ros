@@ -24,6 +24,8 @@
 namespace rclcpp
 {
 
+/// @sa https://github.com/ros2/rclcpp/blob/humble/rclcpp/src/rclcpp/generic_subscription.cpp
+
 std::shared_ptr<void> MessageInfoSubscription::create_message()
 {
   return create_serialized_message();
@@ -41,9 +43,9 @@ void MessageInfoSubscription::handle_message(std::shared_ptr<void> &, const rclc
 }
 
 void MessageInfoSubscription::handle_serialized_message(
-  const std::shared_ptr<rclcpp::SerializedMessage> & message, const rclcpp::MessageInfo &)
+  const std::shared_ptr<rclcpp::SerializedMessage> &, const rclcpp::MessageInfo & message_info)
 {
-  callback_(message);
+  callback_(message_info);
 }
 
 void MessageInfoSubscription::handle_loaned_message(

@@ -35,6 +35,8 @@
 namespace rclcpp
 {
 
+/// @sa https://github.com/ros2/rclcpp/blob/humble/rclcpp/include/rclcpp/generic_subscription.hpp
+
 /// %Subscription for serialized messages whose type is not known at compile time.
 /**
  * Since the type is not known at compile time, this is not a template, and the dynamic library
@@ -73,7 +75,7 @@ public:
     const std::shared_ptr<rcpputils::SharedLibrary> ts_lib, const std::string & topic_name,
     const std::string & topic_type, const rclcpp::QoS & qos,
     // TODO(nnmm): Add variant for callback with message info. See issue #1604.
-    std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback,
+    std::function<void(std::shared_ptr<const rclcpp::MessageInfo &>)> callback,
     const rclcpp::SubscriptionOptionsWithAllocator<AllocatorT> & options)
   : SubscriptionBase(
       node_base, *rclcpp::get_typesupport_handle(topic_type, "rosidl_typesupport_cpp", *ts_lib),
@@ -150,10 +152,45 @@ public:
 private:
   RCLCPP_DISABLE_COPY(MessageInfoSubscription)
 
-  std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback_;
+  std::function<void(const rclcpp::MessageInfo &)> callback_;
   // The type support library should stay loaded, so it is stored in the MessageInfoSubscription
   std::shared_ptr<rcpputils::SharedLibrary> ts_lib_;
 };
+
+/// @sa https://github.com/ros2/rclcpp/blob/humble/rclcpp/include/rclcpp/create_generic_subscription.hpp
+
+/// Create and return a GenericSubscription.
+/**
+ * The returned pointer will never be empty, but this function can throw various exceptions, for
+ * instance when the message's package can not be found on the AMENT_PREFIX_PATH.
+ *
+ * \param topics_interface NodeTopicsInterface pointer used in parts of the setup.
+ * \param topic_name Topic name
+ * \param topic_type Topic type
+ * \param qos %QoS settings
+ * \param callback Callback for new messages of serialized form
+ * \param options %Publisher options.
+ * Not all publisher options are currently respected, the only relevant options for this
+ * publisher are `event_callbacks`, `use_default_callbacks`, and `%callback_group`.
+ */
+template <typename AllocatorT = std::allocator<void>>
+std::shared_ptr<MessageInfoSubscription> create_generic_subscription(
+  rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
+  const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos,
+  std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback,
+  const rclcpp::SubscriptionOptionsWithAllocator<AllocatorT> & options =
+    (rclcpp::SubscriptionOptionsWithAllocator<AllocatorT>()))
+{
+  auto ts_lib = rclcpp::get_typesupport_library(topic_type, "rosidl_typesupport_cpp");
+
+  auto subscription = std::make_shared<MessageInfoSubscription>(
+    topics_interface->get_node_base_interface(), std::move(ts_lib), topic_name, topic_type, qos,
+    callback, options);
+
+  topics_interface->add_subscription(subscription, options.callback_group);
+
+  return subscription;
+}
 
 }  // namespace rclcpp
 
