@@ -19,6 +19,8 @@
 #include <libstatistics_collector/topic_statistics_collector/received_message_age.hpp>
 #include <libstatistics_collector/topic_statistics_collector/received_message_period.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp/serialization.hpp>
+#include <rclcpp/serialized_message.hpp>
 #include <topic_monitor_parameters.hpp>
 #include <unordered_map>
 
@@ -40,11 +42,6 @@ private:
     period_collector_;
   libstatistics_collector::topic_statistics_collector::ReceivedMessageAgeCollector<rclcpp::Time>
     age_collector_;
-  rclcpp::MessageInfo getMessageInfo(
-    const rcl_serialized_message_t * serialized_msg, const std::string & message_type_name);
-  std::unordered_map<std::string, std::shared_ptr<rosidl_message_type_support_t>> type_supports_;
-  auto getTypeSupport(const std::string & message_type_name)
-    -> std::shared_ptr<rosidl_message_type_support_t>;
 };
 
 }  // namespace prometheus_ros

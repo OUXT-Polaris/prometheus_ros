@@ -16,6 +16,7 @@ generate_parameter_library(
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/topic_monitor_component.cpp
+  src/message_info_subscription.cpp
 )
 target_link_libraries(${PROJECT_NAME} topic_monitor_parameters)
 rclcpp_components_register_nodes(${PROJECT_NAME} "prometheus_ros::TopicMonitorComponent")

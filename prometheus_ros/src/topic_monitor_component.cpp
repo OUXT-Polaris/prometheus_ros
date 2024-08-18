@@ -31,51 +31,7 @@ void TopicMonitorComponent::updateTopicNamesAndTypes()
   topic_names_and_types_ = get_topic_names_and_types();
 }
 
-void TopicMonitorComponent::updateSubscription()
-{
-  //   const auto add_subscription = [&](const std::string & topic_name) {
-  //     auto options = rclcpp::SubscriptionOptions();
-  //     options.topic_stats_options.state = rclcpp::TopicStatisticsState::Enable;
-  //     options.topic_stats_options.publish_period = std::chrono::seconds(10);
-
-  //     rclcpp::MessageInfo message_info;
-  //     rclcpp::SerializedMessage msg;
-  //     // rclcpp::wait_for_message<rclcpp::SerializedMessage>(
-  //     //   msg, get_node_base_interface(), message_info, std::chrono::milliseconds(1000));
-
-  //     // auto callback = [this](
-  //     //                   const std::shared_ptr<rclcpp::SerializedMessage> & msg,
-  //     //                   const rclcpp::MessageInfo & message_info) -> void {
-  //     //   const auto now = this->now();
-  //     //   // rclcpp::Time(msg->get_rcl_serialized_message().source_timestamp);
-  //     //   // period_collector_.OnMessageReceived(now);
-  //     //   // age_collector_.OnMessageReceived(now, msg->get_rcl_serialized_message().source_timestamp);
-  //     // };
-  //     // subscriptions_.emplace_back(create_generic_subscription(
-  //     //   topic_name, current_subscribe_topics_[topic_name], rclcpp::QoS(10), callback, options));
-  //   };
-}
-
-auto TopicMonitorComponent::getTypeSupport(const std::string & message_type_name)
-  -> std::shared_ptr<rosidl_message_type_support_t>
-{
-  if (type_supports_.find(message_type_name) == type_supports_.end()) {
-    type_supports_.emplace(
-      message_type_name,
-      std::shared_ptr<rosidl_message_type_support_t>(
-        const_cast<rosidl_message_type_support_t *>(rclcpp::get_typesupport_handle(
-          message_type_name.c_str(), "rosidl_typesupport_cpp",
-          *rclcpp::get_typesupport_library(message_type_name.c_str(), "rosidl_typesupport_cpp")))));
-  }
-  return type_supports_.at(message_type_name);
-}
-
-rclcpp::MessageInfo TopicMonitorComponent::getMessageInfo(
-  const rcl_serialized_message_t * /*serialized_msg*/, const std::string & /*message_type_name*/)
-{
-  // const rosidl_message_type_support_t * type_support = get_message_type_support(message_type_name);
-  return rclcpp::MessageInfo();
-}
+void TopicMonitorComponent::updateSubscription() {}
 }  // namespace prometheus_ros
 
 #include <rclcpp_components/register_node_macro.hpp>
