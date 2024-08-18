@@ -21,10 +21,8 @@ TopicMonitorComponent::TopicMonitorComponent(const rclcpp::NodeOptions & options
 : Node("topic_monitor_node", options),
   parameters_(topic_monitor_node::ParamListener(get_node_parameters_interface()).get_params())
 {
-  // const auto name_and_types = get_topic_names_and_types();
-  //   for (const auto & topic : parameters_.topics) {
-  //     subscriptions_.create_generic_subscription();
-  //   }
+  using namespace std::chrono_literals;
+  timer_ = this->create_wall_timer(10s, [this]() { updateSubscription(); });
 }
 
 void TopicMonitorComponent::updateSubscription()
@@ -44,7 +42,17 @@ void TopicMonitorComponent::updateSubscription()
       continue;
     }
     if (topic_name_and_types_.find(topic) == topic_name_and_types_.end()) {
+      auto callback = [&](const auto &) {};
+
       topic_name_and_types_.emplace(topic, name_and_types.at(topic)[0]);
+      // message_info_subscriptions_.emplace_back(rclcpp::create_message_info_subscription(
+      //   this, name_and_types.at(topic)[0], rclcpp::QoS(10), callback));
+      rclcpp::create_message_info_subscription(
+        get_node_topics_interface(), topic, name_and_types.at(topic)[0], rclcpp::QoS(10), callback);
+    }
+    if (topic_name_and_types_.at(topic) != name_and_types.at(topic)[0]) {
+      /// Topic type is changed.
+      continue;
     }
   }
 }

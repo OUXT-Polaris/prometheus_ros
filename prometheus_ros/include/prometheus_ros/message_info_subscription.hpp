@@ -75,7 +75,7 @@ public:
     const std::shared_ptr<rcpputils::SharedLibrary> ts_lib, const std::string & topic_name,
     const std::string & topic_type, const rclcpp::QoS & qos,
     // TODO(nnmm): Add variant for callback with message info. See issue #1604.
-    std::function<void(std::shared_ptr<const rclcpp::MessageInfo &>)> callback,
+    std::function<void(const rclcpp::MessageInfo &)> callback,
     const rclcpp::SubscriptionOptionsWithAllocator<AllocatorT> & options)
   : SubscriptionBase(
       node_base, *rclcpp::get_typesupport_handle(topic_type, "rosidl_typesupport_cpp", *ts_lib),
@@ -177,7 +177,7 @@ template <typename AllocatorT = std::allocator<void>>
 std::shared_ptr<MessageInfoSubscription> create_message_info_subscription(
   rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
   const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos,
-  std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback,
+  std::function<void(const rclcpp::MessageInfo &)> callback,
   const rclcpp::SubscriptionOptionsWithAllocator<AllocatorT> & options =
     (rclcpp::SubscriptionOptionsWithAllocator<AllocatorT>()))
 {
