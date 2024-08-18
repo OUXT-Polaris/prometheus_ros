@@ -174,7 +174,7 @@ private:
  * publisher are `event_callbacks`, `use_default_callbacks`, and `%callback_group`.
  */
 template <typename AllocatorT = std::allocator<void>>
-std::shared_ptr<MessageInfoSubscription> create_generic_subscription(
+std::shared_ptr<MessageInfoSubscription> create_message_info_subscription(
   rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
   const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos,
   std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback,

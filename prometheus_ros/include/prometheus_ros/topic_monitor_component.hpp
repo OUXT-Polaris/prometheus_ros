@@ -18,6 +18,7 @@
 #include <libstatistics_collector/collector/generate_statistics_message.hpp>
 #include <libstatistics_collector/topic_statistics_collector/received_message_age.hpp>
 #include <libstatistics_collector/topic_statistics_collector/received_message_period.hpp>
+#include <prometheus_ros/message_info_subscription.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/serialization.hpp>
 #include <rclcpp/serialized_message.hpp>
@@ -34,14 +35,13 @@ public:
 private:
   const topic_monitor_node::Params parameters_;
   std::vector<rclcpp::GenericSubscription::SharedPtr> subscriptions_;
-  std::map<std::string, std::string> current_subscribe_topics_;
-  std::map<std::string, std::vector<std::string>> topic_names_and_types_;
-  void updateTopicNamesAndTypes();
-  void updateSubscription();
   libstatistics_collector::topic_statistics_collector::ReceivedMessagePeriodCollector<rclcpp::Time>
     period_collector_;
   libstatistics_collector::topic_statistics_collector::ReceivedMessageAgeCollector<rclcpp::Time>
     age_collector_;
+  std::vector<std::shared_ptr<rclcpp::MessageInfoSubscription>> message_info_subscriptions_;
+  std::unordered_map<std::string, std::string> topic_name_and_types_;
+  void updateSubscription();
 };
 
 }  // namespace prometheus_ros

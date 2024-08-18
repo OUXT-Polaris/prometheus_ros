@@ -21,17 +21,33 @@ TopicMonitorComponent::TopicMonitorComponent(const rclcpp::NodeOptions & options
 : Node("topic_monitor_node", options),
   parameters_(topic_monitor_node::ParamListener(get_node_parameters_interface()).get_params())
 {
+  // const auto name_and_types = get_topic_names_and_types();
   //   for (const auto & topic : parameters_.topics) {
   //     subscriptions_.create_generic_subscription();
   //   }
 }
 
-void TopicMonitorComponent::updateTopicNamesAndTypes()
+void TopicMonitorComponent::updateSubscription()
 {
-  topic_names_and_types_ = get_topic_names_and_types();
+  const auto name_and_types = get_topic_names_and_types();
+  for (const auto & topic : parameters_.topics) {
+    if (name_and_types.find(topic) == name_and_types.end()) {
+      /// Topic does not advertised.
+      continue;
+    }
+    if (name_and_types.at(topic).empty()) {
+      /// Topic type is unkown.
+      continue;
+    }
+    if (name_and_types.at(topic).size() >= 2) {
+      /// Topic type is invalid.
+      continue;
+    }
+    if (topic_name_and_types_.find(topic) == topic_name_and_types_.end()) {
+      topic_name_and_types_.emplace(topic, name_and_types.at(topic)[0]);
+    }
+  }
 }
-
-void TopicMonitorComponent::updateSubscription() {}
 }  // namespace prometheus_ros
 
 #include <rclcpp_components/register_node_macro.hpp>
