@@ -1,0 +1,10 @@
+<launch>
+    <node pkg="examples_rclcpp_minimal_composition" exec="composition_publisher" name="publish" namespace="publisher" args="">
+    </node>
+
+    <node_container pkg="rclcpp_components" exec="component_container_mt" name="prometheus_container" namespace="prometheus_ros" args="">
+        <composable_node pkg="prometheus_ros" plugin="prometheus_ros::TopicMonitorComponent" name="topic_monitor_node" namespace="prometheus_ros">
+            <param from="$(find-pkg-share prometheus_ros)/parameters/example_parameter.yaml"/>
+        </composable_node>
+    </node_container>
+</launch>

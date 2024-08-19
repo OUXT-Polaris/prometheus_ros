@@ -1,0 +1,5 @@
+prometheus_ros:
+  topic_monitor_node:
+    ros__parameters:
+      topics:
+        - /publisher/topic
