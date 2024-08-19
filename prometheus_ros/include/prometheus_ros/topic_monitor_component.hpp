@@ -39,10 +39,19 @@ public:
     const -> std::vector<statistics_msgs::msg::MetricsMessage>;
   const std::string node_name;
 
+  friend std::ostream & operator<<(std::ostream & os, const TopicMonitor & obj);
+
 private:
   ReceivedMessagePeriodCollector<rclcpp::Time> period_collector_;
   ReceivedMessageAgeCollector<diagnostic_msgs::msg::DiagnosticArray> age_collector_;
 };
+
+std::ostream & operator<<(std::ostream & os, const TopicMonitor & obj)
+{
+  os << obj.period_collector_.GetStatusString() << "\n";
+  os << obj.age_collector_.GetStatusString();
+  return os;
+}
 
 class TopicMonitorComponent : public rclcpp::Node
 {
@@ -63,7 +72,7 @@ private:
   void updateSubscription();
   void updateMetric();
 
-  std::unordered_map<std::string, TopicMonitor> topic_monitors_;
+  std::unordered_map<std::string, std::unique_ptr<TopicMonitor>> topic_monitors_;
   rclcpp::TimerBase::SharedPtr timer_;
 };
 

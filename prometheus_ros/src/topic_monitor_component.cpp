@@ -59,7 +59,7 @@ TopicMonitorComponent::TopicMonitorComponent(const rclcpp::NodeOptions & options
   parameters_(topic_monitor_node::ParamListener(get_node_parameters_interface()).get_params())
 {
   using namespace std::chrono_literals;
-  timer_ = this->create_wall_timer(10s, [this]() {
+  timer_ = this->create_wall_timer(1s, [this]() {
     updateSubscription();
     updateMetric();
   });
@@ -72,7 +72,9 @@ void TopicMonitorComponent::updateMetric()
   using namespace std::chrono_literals;
   const rclcpp::Time now = get_clock()->now();
   for (const auto & topic_monitor : topic_monitors_) {
-    topic_monitor.second.getMetrics(now, rclcpp::Duration(10s));
+    topic_monitor.second->getMetrics(now, rclcpp::Duration(10s));
+    // for debug
+    // RCLCPP_INFO_STREAM(get_logger(), *topic_monitor.second);
   }
 }
 
@@ -94,13 +96,15 @@ void TopicMonitorComponent::updateSubscription()
     }
     if (topic_name_and_types_.find(topic) == topic_name_and_types_.end()) {
       auto callback = [&](const auto & message_info) {
-        topic_monitors_.at(topic).onMessageReceived(
+        topic_monitors_.at(topic)->onMessageReceived(
           rclcpp::Time(message_info.get_rmw_message_info().source_timestamp), get_clock()->now());
       };
 
       RCLCPP_INFO_STREAM(get_logger(), "Start checking topic : " + topic);
 
       topic_name_and_types_.emplace(topic, name_and_types.at(topic)[0]);
+      topic_monitors_.emplace(topic, std::make_unique<TopicMonitor>(get_name()));
+
       message_info_subscriptions_.emplace_back(rclcpp::create_message_info_subscription(
         get_node_topics_interface(), topic, name_and_types.at(topic)[0], rclcpp::QoS(10),
         callback));
