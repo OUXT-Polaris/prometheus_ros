@@ -3,3 +3,4 @@ prometheus_ros:
     ros__parameters:
       topics:
         - /publisher/topic
+        - /publisher_2/topic

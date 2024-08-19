@@ -59,7 +59,7 @@ TopicMonitorComponent::TopicMonitorComponent(const rclcpp::NodeOptions & options
   parameters_(topic_monitor_node::ParamListener(get_node_parameters_interface()).get_params())
 {
   using namespace std::chrono_literals;
-  timer_ = this->create_wall_timer(1s, [this]() {
+  timer_ = this->create_wall_timer(10s, [this]() {
     updateSubscription();
     updateMetric();
   });
@@ -74,6 +74,7 @@ void TopicMonitorComponent::updateMetric()
   for (const auto & topic_monitor : topic_monitors_) {
     topic_monitor.second->getMetrics(now, rclcpp::Duration(10s));
     // for debug
+    // RCLCPP_INFO_STREAM(get_logger(), "Topic : " << topic_monitor.first);
     // RCLCPP_INFO_STREAM(get_logger(), *topic_monitor.second);
   }
 }
