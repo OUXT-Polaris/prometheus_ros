@@ -28,10 +28,22 @@
 
 namespace prometheus_ros
 {
+using namespace libstatistics_collector::topic_statistics_collector;
+struct TopicMonitor
+{
+  TopicMonitor();
+  void onMessageReceived(
+    const rclcpp::Time & source_timestamp, const rclcpp::Time & recieve_timestamp);
+
+  ReceivedMessagePeriodCollector<rclcpp::Time> period_collector;
+  ReceivedMessageAgeCollector<diagnostic_msgs::msg::DiagnosticArray> age_collector;
+};
+
 class TopicMonitorComponent : public rclcpp::Node
 {
 public:
   explicit TopicMonitorComponent(const rclcpp::NodeOptions & options);
+  virtual ~TopicMonitorComponent(){};
 
 private:
   const topic_monitor_node::Params parameters_;

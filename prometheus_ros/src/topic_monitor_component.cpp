@@ -18,6 +18,26 @@
 
 namespace prometheus_ros
 {
+TopicMonitor::TopicMonitor()
+{
+  period_collector.Start();
+  age_collector.Start();
+}
+
+void TopicMonitor::onMessageReceived(
+  const rclcpp::Time & source_timestamp, const rclcpp::Time & recieve_timestamp)
+{
+  period_collector.OnMessageReceived(
+    source_timestamp, static_cast<rcl_time_point_value_t>(recieve_timestamp.nanoseconds()));
+  age_collector.OnMessageReceived(
+    diagnostic_msgs::build<diagnostic_msgs::msg::DiagnosticArray>()
+      .header(std_msgs::build<std_msgs::msg::Header>()
+                .stamp(static_cast<builtin_interfaces::msg::Time>(source_timestamp))
+                .frame_id(""))
+      .status({}),
+    static_cast<rcl_time_point_value_t>(recieve_timestamp.nanoseconds()));
+}
+
 TopicMonitorComponent::TopicMonitorComponent(const rclcpp::NodeOptions & options)
 : Node("topic_monitor_node", options),
   parameters_(topic_monitor_node::ParamListener(get_node_parameters_interface()).get_params())
