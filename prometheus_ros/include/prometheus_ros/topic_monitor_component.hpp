@@ -29,14 +29,20 @@
 namespace prometheus_ros
 {
 using namespace libstatistics_collector::topic_statistics_collector;
-struct TopicMonitor
+class TopicMonitor
 {
-  TopicMonitor();
+public:
+  explicit TopicMonitor(const std::string & node_name);
   void onMessageReceived(
     const rclcpp::Time & source_timestamp, const rclcpp::Time & recieve_timestamp);
+  const auto getMetrics(
+    const rclcpp::Time & window_end_timestamp, const rclcpp::Duration & duration)
+    -> std::vector<statistics_msgs::msg::MetricsMessage>;
+  const std::string node_name;
 
-  ReceivedMessagePeriodCollector<rclcpp::Time> period_collector;
-  ReceivedMessageAgeCollector<diagnostic_msgs::msg::DiagnosticArray> age_collector;
+private:
+  ReceivedMessagePeriodCollector<rclcpp::Time> period_collector_;
+  ReceivedMessageAgeCollector<diagnostic_msgs::msg::DiagnosticArray> age_collector_;
 };
 
 class TopicMonitorComponent : public rclcpp::Node
@@ -57,6 +63,8 @@ private:
   std::unordered_map<std::string, std::string> topic_name_and_types_;
   void updateSubscription();
   void updateMetric();
+
+  std::unordered_map<std::string, TopicMonitor> topic_monitors_;
   rclcpp::TimerBase::SharedPtr timer_;
 };
 

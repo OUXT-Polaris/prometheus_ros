@@ -18,24 +18,40 @@
 
 namespace prometheus_ros
 {
-TopicMonitor::TopicMonitor()
+TopicMonitor::TopicMonitor(const std::string & node_name) : node_name(node_name)
 {
-  period_collector.Start();
-  age_collector.Start();
+  period_collector_.Start();
+  age_collector_.Start();
 }
 
 void TopicMonitor::onMessageReceived(
   const rclcpp::Time & source_timestamp, const rclcpp::Time & recieve_timestamp)
 {
-  period_collector.OnMessageReceived(
+  period_collector_.OnMessageReceived(
     source_timestamp, static_cast<rcl_time_point_value_t>(recieve_timestamp.nanoseconds()));
-  age_collector.OnMessageReceived(
+  age_collector_.OnMessageReceived(
     diagnostic_msgs::build<diagnostic_msgs::msg::DiagnosticArray>()
       .header(std_msgs::build<std_msgs::msg::Header>()
                 .stamp(static_cast<builtin_interfaces::msg::Time>(source_timestamp))
                 .frame_id(""))
       .status({}),
     static_cast<rcl_time_point_value_t>(recieve_timestamp.nanoseconds()));
+}
+
+const auto TopicMonitor::getMetrics(
+  const rclcpp::Time & window_end_timestamp, const rclcpp::Duration & duration)
+  -> std::vector<statistics_msgs::msg::MetricsMessage>
+{
+  using namespace libstatistics_collector::collector;
+  return {
+    GenerateStatisticMessage(
+      node_name, period_collector_.GetMetricName(), period_collector_.GetMetricUnit(),
+      window_end_timestamp - duration, window_end_timestamp,
+      period_collector_.GetStatisticsResults()),
+    GenerateStatisticMessage(
+      node_name, age_collector_.GetMetricName(), age_collector_.GetMetricUnit(),
+      window_end_timestamp - duration, window_end_timestamp,
+      age_collector_.GetStatisticsResults())};
 }
 
 TopicMonitorComponent::TopicMonitorComponent(const rclcpp::NodeOptions & options)
