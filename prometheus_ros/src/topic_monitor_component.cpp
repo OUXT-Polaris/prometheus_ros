@@ -38,8 +38,8 @@ void TopicMonitor::onMessageReceived(
     static_cast<rcl_time_point_value_t>(recieve_timestamp.nanoseconds()));
 }
 
-const auto TopicMonitor::getMetrics(
-  const rclcpp::Time & window_end_timestamp, const rclcpp::Duration & duration)
+auto TopicMonitor::getMetrics(
+  const rclcpp::Time & window_end_timestamp, const rclcpp::Duration & duration) const
   -> std::vector<statistics_msgs::msg::MetricsMessage>
 {
   using namespace libstatistics_collector::collector;
@@ -71,15 +71,9 @@ void TopicMonitorComponent::updateMetric()
 {
   using namespace std::chrono_literals;
   const rclcpp::Time now = get_clock()->now();
-  const auto period_statistic_message =
-    libstatistics_collector::collector::GenerateStatisticMessage(
-      get_name(), period_collector_.GetMetricName(), period_collector_.GetMetricUnit(),
-      now - rclcpp::Duration(10s), now, period_collector_.GetStatisticsResults());
-  // RCLCPP_INFO_STREAM(get_logger(), statistics_msgs::msg::to_yaml(period_statistic_message));
-  const auto age_statistic_message = libstatistics_collector::collector::GenerateStatisticMessage(
-    get_name(), age_collector_.GetMetricName(), age_collector_.GetMetricUnit(),
-    now - rclcpp::Duration(10s), now, age_collector_.GetStatisticsResults());
-  // RCLCPP_INFO_STREAM(get_logger(), statistics_msgs::msg::to_yaml(age_statistic_message));
+  for (const auto & topic_monitor : topic_monitors_) {
+    topic_monitor.second.getMetrics(now, rclcpp::Duration(10s));
+  }
 }
 
 void TopicMonitorComponent::updateSubscription()
@@ -100,18 +94,8 @@ void TopicMonitorComponent::updateSubscription()
     }
     if (topic_name_and_types_.find(topic) == topic_name_and_types_.end()) {
       auto callback = [&](const auto & message_info) {
-        const rclcpp::Time now = get_clock()->now();
-        period_collector_.OnMessageReceived(
-          rclcpp::Time(message_info.get_rmw_message_info().source_timestamp),
-          static_cast<rcl_time_point_value_t>(now.nanoseconds()));
-        age_collector_.OnMessageReceived(
-          diagnostic_msgs::build<diagnostic_msgs::msg::DiagnosticArray>()
-            .header(std_msgs::build<std_msgs::msg::Header>()
-                      .stamp(static_cast<builtin_interfaces::msg::Time>(
-                        rclcpp::Time(message_info.get_rmw_message_info().source_timestamp)))
-                      .frame_id(""))
-            .status({}),
-          static_cast<rcl_time_point_value_t>(now.nanoseconds()));
+        topic_monitors_.at(topic).onMessageReceived(
+          rclcpp::Time(message_info.get_rmw_message_info().source_timestamp), get_clock()->now());
       };
 
       RCLCPP_INFO_STREAM(get_logger(), "Start checking topic : " + topic);

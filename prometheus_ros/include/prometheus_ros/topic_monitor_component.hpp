@@ -35,9 +35,8 @@ public:
   explicit TopicMonitor(const std::string & node_name);
   void onMessageReceived(
     const rclcpp::Time & source_timestamp, const rclcpp::Time & recieve_timestamp);
-  const auto getMetrics(
-    const rclcpp::Time & window_end_timestamp, const rclcpp::Duration & duration)
-    -> std::vector<statistics_msgs::msg::MetricsMessage>;
+  auto getMetrics(const rclcpp::Time & window_end_timestamp, const rclcpp::Duration & duration)
+    const -> std::vector<statistics_msgs::msg::MetricsMessage>;
   const std::string node_name;
 
 private:
