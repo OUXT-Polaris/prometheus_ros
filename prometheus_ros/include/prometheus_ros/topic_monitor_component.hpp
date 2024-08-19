@@ -15,6 +15,7 @@
 #ifndef PROMETHEUS_ROS__TOPIC_MONITOR_COMPONENT_HPP_
 #define PROMETHEUS_ROS__TOPIC_MONITOR_COMPONENT_HPP_
 
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <libstatistics_collector/collector/generate_statistics_message.hpp>
 #include <libstatistics_collector/topic_statistics_collector/received_message_age.hpp>
 #include <libstatistics_collector/topic_statistics_collector/received_message_period.hpp>
@@ -37,7 +38,8 @@ private:
   std::vector<rclcpp::GenericSubscription::SharedPtr> subscriptions_;
   libstatistics_collector::topic_statistics_collector::ReceivedMessagePeriodCollector<rclcpp::Time>
     period_collector_;
-  libstatistics_collector::topic_statistics_collector::ReceivedMessageAgeCollector<rclcpp::Time>
+  libstatistics_collector::topic_statistics_collector::ReceivedMessageAgeCollector<
+    diagnostic_msgs::msg::DiagnosticArray>
     age_collector_;
   std::vector<std::shared_ptr<rclcpp::MessageInfoSubscription>> message_info_subscriptions_;
   std::unordered_map<std::string, std::string> topic_name_and_types_;

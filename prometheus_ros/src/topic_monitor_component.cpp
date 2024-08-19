@@ -14,6 +14,7 @@
 
 #include <prometheus_ros/topic_monitor_component.hpp>
 #include <rclcpp/wait_for_message.hpp>
+#include <std_msgs/msg/header.hpp>
 
 namespace prometheus_ros
 {
@@ -26,6 +27,8 @@ TopicMonitorComponent::TopicMonitorComponent(const rclcpp::NodeOptions & options
     updateSubscription();
     updateMetric();
   });
+  period_collector_.Start();
+  age_collector_.Start();
 }
 
 void TopicMonitorComponent::updateMetric()
@@ -36,9 +39,11 @@ void TopicMonitorComponent::updateMetric()
     libstatistics_collector::collector::GenerateStatisticMessage(
       get_name(), period_collector_.GetMetricName(), period_collector_.GetMetricUnit(),
       now - rclcpp::Duration(10s), now, period_collector_.GetStatisticsResults());
+  // RCLCPP_INFO_STREAM(get_logger(), statistics_msgs::msg::to_yaml(period_statistic_message));
   const auto age_statistic_message = libstatistics_collector::collector::GenerateStatisticMessage(
     get_name(), age_collector_.GetMetricName(), age_collector_.GetMetricUnit(),
     now - rclcpp::Duration(10s), now, age_collector_.GetStatisticsResults());
+  // RCLCPP_INFO_STREAM(get_logger(), statistics_msgs::msg::to_yaml(age_statistic_message));
 }
 
 void TopicMonitorComponent::updateSubscription()
@@ -62,11 +67,18 @@ void TopicMonitorComponent::updateSubscription()
         const rclcpp::Time now = get_clock()->now();
         period_collector_.OnMessageReceived(
           rclcpp::Time(message_info.get_rmw_message_info().source_timestamp),
-          message_info.get_rmw_message_info().received_timestamp);
+          static_cast<rcl_time_point_value_t>(now.nanoseconds()));
         age_collector_.OnMessageReceived(
-          rclcpp::Time(message_info.get_rmw_message_info().source_timestamp),
-          message_info.get_rmw_message_info().received_timestamp);
+          diagnostic_msgs::build<diagnostic_msgs::msg::DiagnosticArray>()
+            .header(std_msgs::build<std_msgs::msg::Header>()
+                      .stamp(static_cast<builtin_interfaces::msg::Time>(
+                        rclcpp::Time(message_info.get_rmw_message_info().source_timestamp)))
+                      .frame_id(""))
+            .status({}),
+          static_cast<rcl_time_point_value_t>(now.nanoseconds()));
       };
+
+      RCLCPP_INFO_STREAM(get_logger(), "Start checking topic : " + topic);
 
       topic_name_and_types_.emplace(topic, name_and_types.at(topic)[0]);
       message_info_subscriptions_.emplace_back(rclcpp::create_message_info_subscription(
