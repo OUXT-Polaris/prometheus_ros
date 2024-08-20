@@ -66,6 +66,7 @@ std::ostream & operator<<(std::ostream & os, const TopicMonitor & obj)
 struct TopicGauge
 {
   TopicGauge(prometheus::Family<prometheus::Gauge> & family);
+  void update(const statistics_msgs::msg::MetricsMessage & metrics);
   prometheus::Gauge & average;
   prometheus::Gauge & min;
   prometheus::Gauge & max;
@@ -93,10 +94,9 @@ private:
   std::shared_ptr<prometheus::Registry> registry_;
   prometheus::Exposer exposer_;
   prometheus::Family<prometheus::Gauge> & period_gauge_family_;
-  //   std::unordered_map<std::string, std::unordered_map<std::string, prometheus::Gauge &>>
-  //     period_gauges_;
+  std::unordered_map<std::string, TopicGauge> period_gauge_;
   prometheus::Family<prometheus::Gauge> & age_gauge_family_;
-  // std::unordered_map<std::string, std::unordered_map<std::string, prometheus::Gauge &>> age_gauges_;
+  std::unordered_map<std::string, TopicGauge> age_gauge_;
 };
 
 }  // namespace prometheus_ros

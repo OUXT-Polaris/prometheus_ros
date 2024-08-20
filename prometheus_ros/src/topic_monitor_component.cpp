@@ -14,6 +14,7 @@
 
 #include <prometheus_ros/topic_monitor_component.hpp>
 #include <rclcpp/wait_for_message.hpp>
+#include <statistics_msgs/msg/statistic_data_type.hpp>
 #include <std_msgs/msg/header.hpp>
 
 namespace prometheus_ros
@@ -74,6 +75,43 @@ TopicGauge::TopicGauge(prometheus::Family<prometheus::Gauge> & family)
   std_dev(family.Add({{"type", "std_dev"}})),
   count(family.Add({{"type", "count"}}))
 {
+}
+
+void TopicGauge::update(const statistics_msgs::msg::MetricsMessage & metrics)
+{
+  const auto get_value = [metrics](const std::uint8_t data_type) -> double {
+    for (const auto statistic : metrics.statistics) {
+      if (statistic.data_type == data_type) {
+        return statistic.data;
+      }
+    }
+    throw std::runtime_error("Metrics message was wrong, something unexpected happens.");
+  };
+  if (const auto value =
+        get_value(statistics_msgs::msg::StatisticDataType::STATISTICS_DATA_TYPE_AVERAGE);
+      std::isnan(value)) {
+    average.Set(value);
+  }
+  if (const auto value =
+        get_value(statistics_msgs::msg::StatisticDataType::STATISTICS_DATA_TYPE_MINIMUM);
+      std::isnan(value)) {
+    min.Set(value);
+  }
+  if (const auto value =
+        get_value(statistics_msgs::msg::StatisticDataType::STATISTICS_DATA_TYPE_MAXIMUM);
+      std::isnan(value)) {
+    max.Set(value);
+  }
+  if (const auto value =
+        get_value(statistics_msgs::msg::StatisticDataType::STATISTICS_DATA_TYPE_STDDEV);
+      std::isnan(value)) {
+    std_dev.Set(value);
+  }
+  if (const auto value =
+        get_value(statistics_msgs::msg::StatisticDataType::STATISTICS_DATA_TYPE_SAMPLE_COUNT);
+      std::isnan(value)) {
+    count.Set(value);
+  }
 }
 
 TopicMonitorComponent::TopicMonitorComponent(const rclcpp::NodeOptions & options)
