@@ -142,10 +142,13 @@ void TopicMonitorComponent::updateMetric()
   using namespace std::chrono_literals;
   const rclcpp::Time now = get_clock()->now();
   for (const auto & topic_monitor : topic_monitors_) {
-    topic_monitor.second->getMetrics(now, rclcpp::Duration(10s));
     // for debug
     RCLCPP_INFO_STREAM(get_logger(), "Topic : " << topic_monitor.first);
     RCLCPP_INFO_STREAM(get_logger(), *topic_monitor.second);
+    period_gauge_.at(topic_monitor.first)
+      .update(topic_monitor.second->getPeriodMetrics(now, rclcpp::Duration(10s)));
+    age_gauge_.at(topic_monitor.first)
+      .update(topic_monitor.second->getAgeMetrics(now, rclcpp::Duration(10s)));
   }
 }
 
@@ -176,8 +179,8 @@ void TopicMonitorComponent::updateSubscription()
       topic_name_and_types_.emplace(topic, name_and_types.at(topic)[0]);
       topic_monitors_.emplace(topic, std::make_unique<TopicMonitor>(get_name()));
 
-      // period_gauges_.emplace(topic, {"average", period_gauge_family_.Add({{"type", "average"}})});
-      // age_gauges_.emplace(topic, age_gauge_family_.Add({{"type", "average"}}));
+      period_gauge_.emplace(topic, TopicGauge(period_gauge_family_));
+      age_gauge_.emplace(topic, TopicGauge(age_gauge_family_));
 
       message_info_subscriptions_.emplace_back(rclcpp::create_message_info_subscription(
         get_node_topics_interface(), topic, name_and_types.at(topic)[0], rclcpp::QoS(10),
