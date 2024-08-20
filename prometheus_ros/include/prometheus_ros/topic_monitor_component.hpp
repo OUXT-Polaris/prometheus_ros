@@ -65,7 +65,7 @@ std::ostream & operator<<(std::ostream & os, const TopicMonitor & obj)
 
 struct TopicGauge
 {
-  TopicGauge(prometheus::Family<prometheus::Gauge> & family);
+  TopicGauge(prometheus::Family<prometheus::Gauge> & family, const std::string & topic);
   void update(const statistics_msgs::msg::MetricsMessage & metrics);
   prometheus::Gauge & average;
   prometheus::Gauge & min;

@@ -69,12 +69,12 @@ auto TopicMonitor::getMetrics(
     getAgeMetrics(window_end_timestamp, duration)};
 }
 
-TopicGauge::TopicGauge(prometheus::Family<prometheus::Gauge> & family)
-: average(family.Add({{"type", "average"}})),
-  min(family.Add({{"type", "min"}})),
-  max(family.Add({{"type", "max"}})),
-  std_dev(family.Add({{"type", "std_dev"}})),
-  count(family.Add({{"type", "count"}}))
+TopicGauge::TopicGauge(prometheus::Family<prometheus::Gauge> & family, const std::string & topic)
+: average(family.Add({{"type", "average"}, {"topic", topic}})),
+  min(family.Add({{"type", "min"}, {"topic", topic}})),
+  max(family.Add({{"type", "max"}, {"topic", topic}})),
+  std_dev(family.Add({{"type", "std_dev"}, {"topic", topic}})),
+  count(family.Add({{"type", "count"}, {"topic", topic}}))
 {
 }
 
@@ -90,27 +90,27 @@ void TopicGauge::update(const statistics_msgs::msg::MetricsMessage & metrics)
   };
   if (const auto value =
         get_value(statistics_msgs::msg::StatisticDataType::STATISTICS_DATA_TYPE_AVERAGE);
-      std::isnan(value)) {
+      !std::isnan(value)) {
     average.Set(value);
   }
   if (const auto value =
         get_value(statistics_msgs::msg::StatisticDataType::STATISTICS_DATA_TYPE_MINIMUM);
-      std::isnan(value)) {
+      !std::isnan(value)) {
     min.Set(value);
   }
   if (const auto value =
         get_value(statistics_msgs::msg::StatisticDataType::STATISTICS_DATA_TYPE_MAXIMUM);
-      std::isnan(value)) {
+      !std::isnan(value)) {
     max.Set(value);
   }
   if (const auto value =
         get_value(statistics_msgs::msg::StatisticDataType::STATISTICS_DATA_TYPE_STDDEV);
-      std::isnan(value)) {
+      !std::isnan(value)) {
     std_dev.Set(value);
   }
   if (const auto value =
         get_value(statistics_msgs::msg::StatisticDataType::STATISTICS_DATA_TYPE_SAMPLE_COUNT);
-      std::isnan(value)) {
+      !std::isnan(value)) {
     count.Set(value);
   }
 }
@@ -119,7 +119,7 @@ TopicMonitorComponent::TopicMonitorComponent(const rclcpp::NodeOptions & options
 : Node("topic_monitor_node", options),
   parameters_(topic_monitor_node::ParamListener(get_node_parameters_interface()).get_params()),
   registry_(std::make_shared<prometheus::Registry>()),
-  exposer_("127.0.0.1:" + std::to_string(parameters_.port)),
+  exposer_("0.0.0.0:" + std::to_string(parameters_.port)),
   period_gauge_family_(prometheus::BuildGauge()
                          .Name("message_period")
                          .Help("period of the ROS 2 message.")
@@ -180,8 +180,8 @@ void TopicMonitorComponent::updateSubscription()
       topic_name_and_types_.emplace(topic, name_and_types.at(topic)[0]);
       topic_monitors_.emplace(topic, std::make_unique<TopicMonitor>(get_name()));
 
-      period_gauge_.emplace(topic, TopicGauge(period_gauge_family_));
-      age_gauge_.emplace(topic, TopicGauge(age_gauge_family_));
+      period_gauge_.emplace(topic, TopicGauge(period_gauge_family_, topic));
+      age_gauge_.emplace(topic, TopicGauge(age_gauge_family_, topic));
 
       message_info_subscriptions_.emplace_back(rclcpp::create_message_info_subscription(
         get_node_topics_interface(), topic, name_and_types.at(topic)[0], rclcpp::QoS(10),
