@@ -144,8 +144,8 @@ void TopicMonitorComponent::updateMetric()
   const rclcpp::Time now = get_clock()->now();
   for (const auto & topic_monitor : topic_monitors_) {
     // for debug
-    RCLCPP_INFO_STREAM(get_logger(), "Topic : " << topic_monitor.first);
-    RCLCPP_INFO_STREAM(get_logger(), *topic_monitor.second);
+    // RCLCPP_INFO_STREAM(get_logger(), "Topic : " << topic_monitor.first);
+    // RCLCPP_INFO_STREAM(get_logger(), *topic_monitor.second);
     period_gauge_.at(topic_monitor.first)
       .update(topic_monitor.second->getPeriodMetrics(now, rclcpp::Duration(10s)));
     age_gauge_.at(topic_monitor.first)

@@ -4,4 +4,4 @@ prometheus_ros:
       topics:
         - /publisher/topic
         - /publisher_2/topic
-      port: 8080
+      port: 9100
