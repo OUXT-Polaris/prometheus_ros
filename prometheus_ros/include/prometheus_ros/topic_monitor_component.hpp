@@ -40,6 +40,11 @@ public:
   explicit TopicMonitor(const std::string & node_name);
   void onMessageReceived(
     const rclcpp::Time & source_timestamp, const rclcpp::Time & recieve_timestamp);
+  auto getPeriodMetrics(
+    const rclcpp::Time & window_end_timestamp, const rclcpp::Duration & duration) const
+    -> statistics_msgs::msg::MetricsMessage;
+  auto getAgeMetric(const rclcpp::Time & window_end_timestamp, const rclcpp::Duration & duration)
+    const -> statistics_msgs::msg::MetricsMessage;
   auto getMetrics(const rclcpp::Time & window_end_timestamp, const rclcpp::Duration & duration)
     const -> std::vector<statistics_msgs::msg::MetricsMessage>;
   const std::string node_name;
@@ -57,6 +62,16 @@ std::ostream & operator<<(std::ostream & os, const TopicMonitor & obj)
   os << obj.age_collector_.GetStatusString();
   return os;
 }
+
+struct TopicGauge
+{
+  TopicGauge(prometheus::Family<prometheus::Gauge> & family);
+  prometheus::Gauge & average;
+  prometheus::Gauge & min;
+  prometheus::Gauge & max;
+  prometheus::Gauge & std_dev;
+  prometheus::Gauge & count;
+};
 
 class TopicMonitorComponent : public rclcpp::Node
 {
@@ -77,8 +92,11 @@ private:
 
   std::shared_ptr<prometheus::Registry> registry_;
   prometheus::Exposer exposer_;
-  prometheus::Family<prometheus::Gauge> & period_gauge_;
-  prometheus::Family<prometheus::Gauge> & age_gauge_;
+  prometheus::Family<prometheus::Gauge> & period_gauge_family_;
+  //   std::unordered_map<std::string, std::unordered_map<std::string, prometheus::Gauge &>>
+  //     period_gauges_;
+  prometheus::Family<prometheus::Gauge> & age_gauge_family_;
+  // std::unordered_map<std::string, std::unordered_map<std::string, prometheus::Gauge &>> age_gauges_;
 };
 
 }  // namespace prometheus_ros

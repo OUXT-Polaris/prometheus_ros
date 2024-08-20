@@ -38,20 +38,42 @@ void TopicMonitor::onMessageReceived(
     static_cast<rcl_time_point_value_t>(recieve_timestamp.nanoseconds()));
 }
 
+auto TopicMonitor::getPeriodMetrics(
+  const rclcpp::Time & window_end_timestamp, const rclcpp::Duration & duration) const
+  -> statistics_msgs::msg::MetricsMessage
+{
+  using namespace libstatistics_collector::collector;
+  return GenerateStatisticMessage(
+    node_name, period_collector_.GetMetricName(), period_collector_.GetMetricUnit(),
+    window_end_timestamp - duration, window_end_timestamp,
+    period_collector_.GetStatisticsResults());
+}
+
+auto TopicMonitor::getAgeMetric(
+  const rclcpp::Time & window_end_timestamp, const rclcpp::Duration & duration) const
+  -> statistics_msgs::msg::MetricsMessage
+{
+  using namespace libstatistics_collector::collector;
+  return GenerateStatisticMessage(
+    node_name, age_collector_.GetMetricName(), age_collector_.GetMetricUnit(),
+    window_end_timestamp - duration, window_end_timestamp, age_collector_.GetStatisticsResults());
+}
+
 auto TopicMonitor::getMetrics(
   const rclcpp::Time & window_end_timestamp, const rclcpp::Duration & duration) const
   -> std::vector<statistics_msgs::msg::MetricsMessage>
 {
-  using namespace libstatistics_collector::collector;
   return {
-    GenerateStatisticMessage(
-      node_name, period_collector_.GetMetricName(), period_collector_.GetMetricUnit(),
-      window_end_timestamp - duration, window_end_timestamp,
-      period_collector_.GetStatisticsResults()),
-    GenerateStatisticMessage(
-      node_name, age_collector_.GetMetricName(), age_collector_.GetMetricUnit(),
-      window_end_timestamp - duration, window_end_timestamp,
-      age_collector_.GetStatisticsResults())};
+    getPeriodMetrics(window_end_timestamp, duration), getAgeMetric(window_end_timestamp, duration)};
+}
+
+TopicGauge::TopicGauge(prometheus::Family<prometheus::Gauge> & family)
+: average(family.Add({{"type", "average"}})),
+  min(family.Add({{"type", "min"}})),
+  max(family.Add({{"type", "max"}})),
+  std_dev(family.Add({{"type", "std_dev"}})),
+  count(family.Add({{"type", "count"}}))
+{
 }
 
 TopicMonitorComponent::TopicMonitorComponent(const rclcpp::NodeOptions & options)
@@ -59,17 +81,19 @@ TopicMonitorComponent::TopicMonitorComponent(const rclcpp::NodeOptions & options
   parameters_(topic_monitor_node::ParamListener(get_node_parameters_interface()).get_params()),
   registry_(std::make_shared<prometheus::Registry>()),
   exposer_("127.0.0.1:" + std::to_string(parameters_.port)),
-  period_gauge_(prometheus::BuildGauge()
-                  .Name("message_period")
-                  .Help("period of the ROS 2 message.")
-                  .Register(*registry_)),
-  age_gauge_(prometheus::BuildGauge()
-               .Name("message_age")
-               .Help("age of the ROS 2 message.")
-               .Register(*registry_))
+  period_gauge_family_(prometheus::BuildGauge()
+                         .Name("message_period")
+                         .Help("period of the ROS 2 message.")
+                         .Register(*registry_)),
+  age_gauge_family_(prometheus::BuildGauge()
+                      .Name("message_age")
+                      .Help("age of the ROS 2 message.")
+                      .Register(*registry_))
 {
+  exposer_.RegisterCollectable(registry_);
+
   using namespace std::chrono_literals;
-  timer_ = this->create_wall_timer(10s, [this]() {
+  timer_ = this->create_wall_timer(1s, [this]() {
     updateSubscription();
     updateMetric();
   });
@@ -82,8 +106,8 @@ void TopicMonitorComponent::updateMetric()
   for (const auto & topic_monitor : topic_monitors_) {
     topic_monitor.second->getMetrics(now, rclcpp::Duration(10s));
     // for debug
-    // RCLCPP_INFO_STREAM(get_logger(), "Topic : " << topic_monitor.first);
-    // RCLCPP_INFO_STREAM(get_logger(), *topic_monitor.second);
+    RCLCPP_INFO_STREAM(get_logger(), "Topic : " << topic_monitor.first);
+    RCLCPP_INFO_STREAM(get_logger(), *topic_monitor.second);
   }
 }
 
@@ -113,6 +137,9 @@ void TopicMonitorComponent::updateSubscription()
 
       topic_name_and_types_.emplace(topic, name_and_types.at(topic)[0]);
       topic_monitors_.emplace(topic, std::make_unique<TopicMonitor>(get_name()));
+
+      // period_gauges_.emplace(topic, {"average", period_gauge_family_.Add({{"type", "average"}})});
+      // age_gauges_.emplace(topic, age_gauge_family_.Add({{"type", "average"}}));
 
       message_info_subscriptions_.emplace_back(rclcpp::create_message_info_subscription(
         get_node_topics_interface(), topic, name_and_types.at(topic)[0], rclcpp::QoS(10),
