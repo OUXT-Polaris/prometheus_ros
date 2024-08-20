@@ -17,6 +17,7 @@
 
 #include <prometheus/counter.h>
 #include <prometheus/exposer.h>
+#include <prometheus/gauge.h>
 #include <prometheus/registry.h>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
@@ -74,8 +75,10 @@ private:
   std::unordered_map<std::string, std::unique_ptr<TopicMonitor>> topic_monitors_;
   rclcpp::TimerBase::SharedPtr timer_;
 
+  std::shared_ptr<prometheus::Registry> registry_;
   prometheus::Exposer exposer_;
-  // std::unique_ptr<prometheus::Exposer> exposer_;
+  prometheus::Family<prometheus::Gauge> & period_gauge_;
+  prometheus::Family<prometheus::Gauge> & age_gauge_;
 };
 
 }  // namespace prometheus_ros

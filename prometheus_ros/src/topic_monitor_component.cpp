@@ -57,7 +57,16 @@ auto TopicMonitor::getMetrics(
 TopicMonitorComponent::TopicMonitorComponent(const rclcpp::NodeOptions & options)
 : Node("topic_monitor_node", options),
   parameters_(topic_monitor_node::ParamListener(get_node_parameters_interface()).get_params()),
-  exposer_("127.0.0.1:" + std::to_string(parameters_.port))
+  registry_(std::make_shared<prometheus::Registry>()),
+  exposer_("127.0.0.1:" + std::to_string(parameters_.port)),
+  period_gauge_(prometheus::BuildGauge()
+                  .Name("message_period")
+                  .Help("period of the ROS 2 message.")
+                  .Register(*registry_)),
+  age_gauge_(prometheus::BuildGauge()
+               .Name("message_age")
+               .Help("age of the ROS 2 message.")
+               .Register(*registry_))
 {
   using namespace std::chrono_literals;
   timer_ = this->create_wall_timer(10s, [this]() {
