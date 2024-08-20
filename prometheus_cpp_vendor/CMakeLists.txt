@@ -15,6 +15,11 @@ ament_vendor(prometheus-cpp
   CMAKE_ARGS -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release
 )
 
+ament_export_include_directories(opt/prometheus_cpp_vendor/include)
+ament_export_libraries(prometheus-cpp-core)
+ament_export_libraries(prometheus-cpp-pull)
+ament_export_libraries(prometheus-cpp-push)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   set(ament_cmake_copyright_FOUND TRUE)

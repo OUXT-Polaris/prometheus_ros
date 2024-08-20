@@ -56,15 +56,14 @@ auto TopicMonitor::getMetrics(
 
 TopicMonitorComponent::TopicMonitorComponent(const rclcpp::NodeOptions & options)
 : Node("topic_monitor_node", options),
-  parameters_(topic_monitor_node::ParamListener(get_node_parameters_interface()).get_params())
+  parameters_(topic_monitor_node::ParamListener(get_node_parameters_interface()).get_params()),
+  exposer_("127.0.0.1:" + std::to_string(parameters_.port))
 {
   using namespace std::chrono_literals;
   timer_ = this->create_wall_timer(10s, [this]() {
     updateSubscription();
     updateMetric();
   });
-  period_collector_.Start();
-  age_collector_.Start();
 }
 
 void TopicMonitorComponent::updateMetric()
