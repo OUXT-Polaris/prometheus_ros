@@ -50,7 +50,7 @@ auto TopicMonitor::getPeriodMetrics(
     period_collector_.GetStatisticsResults());
 }
 
-auto TopicMonitor::getAgeMetric(
+auto TopicMonitor::getAgeMetrics(
   const rclcpp::Time & window_end_timestamp, const rclcpp::Duration & duration) const
   -> statistics_msgs::msg::MetricsMessage
 {
@@ -65,7 +65,8 @@ auto TopicMonitor::getMetrics(
   -> std::vector<statistics_msgs::msg::MetricsMessage>
 {
   return {
-    getPeriodMetrics(window_end_timestamp, duration), getAgeMetric(window_end_timestamp, duration)};
+    getPeriodMetrics(window_end_timestamp, duration),
+    getAgeMetrics(window_end_timestamp, duration)};
 }
 
 TopicGauge::TopicGauge(prometheus::Family<prometheus::Gauge> & family)

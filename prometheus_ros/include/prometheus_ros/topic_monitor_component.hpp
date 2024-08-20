@@ -43,7 +43,7 @@ public:
   auto getPeriodMetrics(
     const rclcpp::Time & window_end_timestamp, const rclcpp::Duration & duration) const
     -> statistics_msgs::msg::MetricsMessage;
-  auto getAgeMetric(const rclcpp::Time & window_end_timestamp, const rclcpp::Duration & duration)
+  auto getAgeMetrics(const rclcpp::Time & window_end_timestamp, const rclcpp::Duration & duration)
     const -> statistics_msgs::msg::MetricsMessage;
   auto getMetrics(const rclcpp::Time & window_end_timestamp, const rclcpp::Duration & duration)
     const -> std::vector<statistics_msgs::msg::MetricsMessage>;
