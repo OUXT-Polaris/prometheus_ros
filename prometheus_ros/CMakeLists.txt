@@ -21,10 +21,6 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 target_link_libraries(${PROJECT_NAME} topic_monitor_parameters)
 rclcpp_components_register_nodes(${PROJECT_NAME} "prometheus_ros::TopicMonitorComponent")
 
-ament_auto_add_executable(${PROJECT_NAME}_node
-  src/main.cpp
-)
-
 install(DIRECTORY launch parameters config
   DESTINATION share/${PROJECT_NAME}
 )
