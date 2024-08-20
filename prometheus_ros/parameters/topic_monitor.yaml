@@ -4,3 +4,10 @@ topic_monitor_node:
     default_value: []
     description: "Name of the topics you want to monitor."
     read_only: true
+  port:
+    type: int
+    default_value: 9100
+    description: "Port of the prometheus exporter"
+    read_only: true
+    validation:
+      bounds<>: [1, 65535]

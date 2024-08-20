@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+     - '9090:9090'
+    volumes:
+     - './prometheus.yml:/etc/prometheus/prometheus.yml'
+     - 'prometheus-data:/prometheus'
+    network_mode: "host"
+volumes:
+  prometheus-data: {}
