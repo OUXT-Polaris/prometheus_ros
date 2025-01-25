@@ -15,6 +15,8 @@
   <depend>generate_parameter_library</depend>
   <depend>libstatistics_collector</depend>
   <depend>diagnostic_msgs</depend>
+  <depend>curl</depend>
+  <depend>curlpp-dev</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ouxt_lint_common</test_depend>
